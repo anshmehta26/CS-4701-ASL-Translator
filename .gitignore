@@ -1,28 +1,45 @@
 # Python
 __pycache__/
 *.py[cod]
+*$py.class
 *.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
 .venv/
 venv/
 env/
-.pytest_cache/
+ENV/
 
-# Node
-node_modules/
-dist/
-build/
-.env
-.env.local
-
-# OS / Editors
+# OS / editors
 .DS_Store
+Thumbs.db
 .vscode/
 .idea/
 *.swp
+*.swo
 
-# Models / data (often too big for git)
+# Project artifacts
+data/raw/
+data/processed/
+checkpoints/
+logs/
+figures/
 *.pt
 *.pth
-*.h5
 *.ckpt
-data/
+*.npz
+
+# Allow committed config / docs
+!configs/
+!docs/
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Misc
+.env
+.env.local

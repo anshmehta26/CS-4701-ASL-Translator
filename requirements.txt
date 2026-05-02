@@ -1,0 +1,16 @@
+# Core ML stack
+torch>=2.0,<3.0
+numpy>=1.23,<3.0
+
+# Computer vision / landmark extraction
+opencv-python>=4.7
+mediapipe>=0.10
+
+# Plotting and analysis
+matplotlib>=3.6
+
+# Config + utilities
+pyyaml>=6.0
+
+# Testing
+pytest>=7.0
