@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+build/
+.env
+.env.local
+
+# OS / Editors
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Models / data (often too big for git)
+*.pt
+*.pth
+*.h5
+*.ckpt
+data/
