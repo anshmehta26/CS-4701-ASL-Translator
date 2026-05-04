@@ -278,3 +278,35 @@ class LandmarkExtractor:
             detection_mask=det_mask,
             fps=0.0, width=0, height=0,
         )
+
+    def extract_image(self, image_path: str | Path) -> ExtractionResult | None:
+        """Run landmark extraction on a single still image.
+
+        The returned ``landmarks`` array has shape ``(1, D)`` so it can flow
+        through the same Dataset / model pipeline as a 1-frame "sequence".
+        Returns ``None`` if MediaPipe failed to detect any hand in the image
+        (we drop these because there's no temporal context to interpolate
+        from).
+        """
+        self._ensure_open()
+        import cv2
+        image_path = Path(image_path)
+        bgr = cv2.imread(str(image_path))
+        if bgr is None:
+            return None
+        rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+        feat, mask = self._frame_to_features(rgb)
+        if not mask.any():
+            return None  # no hand detected -> drop this sample
+
+        # Apply the same per-frame normalization used by extract_video,
+        # but skip temporal smoothing (only one frame).
+        if bool(self.prep_cfg.wrist_relative):
+            feat = _wrist_relative_normalize(feat, self.num_hands)
+        feat = np.nan_to_num(feat, nan=0.0, posinf=0.0, neginf=0.0)
+
+        return ExtractionResult(
+            landmarks=feat.reshape(1, -1).astype(np.float32),
+            detection_mask=mask.reshape(1, -1),
+            fps=0.0, width=0, height=0,
+        )
