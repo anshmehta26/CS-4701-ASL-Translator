@@ -1,0 +1,94 @@
+# =============================================================================
+# CS 4701 — ASL Fingerspelling Recognition (Kaggle ASL Alphabet)
+# =============================================================================
+# Tuned for static-frame fingerspelling: each "sample" is one image of a hand
+# making a letter. The Dataset replicates that single frame to satisfy
+# min_seq_len so the model still trains as a sequence learner — that way the
+# real-time webcam loop (which uses a sliding window) hits exactly the same
+# input distribution.
+# =============================================================================
+
+paths:
+  data_root: "data"
+  raw_videos: "data/raw/asl_alphabet_train"   # alphabet root, not videos
+  wlasl_json: "data/raw/WLASL_v0.3.json"      # unused for alphabet but kept for compat
+  processed: "data/processed"
+  landmarks: "data/processed/landmarks"
+  splits: "data/processed/splits"
+  checkpoints: "checkpoints"
+  logs: "logs"
+  figures: "figures"
+
+dataset:
+  num_classes: 29              # A-Z + space + del + nothing
+  min_videos_per_class: 1
+  train_ratio: 0.80
+  val_ratio: 0.10
+  test_ratio: 0.10
+  max_seq_len: 16              # short -- single-frame stretched to a window
+  min_seq_len: 8               # pad-to length used for static frames
+  cross_subject: false
+
+mediapipe:
+  static_image_mode: true      # IMPORTANT: still images, not video
+  max_num_hands: 1             # alphabet uses one hand
+  min_detection_confidence: 0.4
+  min_tracking_confidence: 0.4
+  use_holistic: false
+
+preprocessing:
+  wrist_relative: true
+  scale_normalize: true
+  smoothing_window: 1          # 1 = disabled (no temporal context for stills)
+  interpolate_missing: false   # 1-frame samples can't interpolate
+  max_missing_frame_ratio: 1.0
+  num_hands: 1                 # 21 * 3 = 63-dim features
+
+augmentation:
+  enable: true
+  horizontal_flip_prob: 0.5    # mirror -> still the same letter
+  gaussian_noise_std: 0.015
+  time_warp_prob: 0.0          # meaningless for static frames
+  time_warp_factor_range: [0.85, 1.15]
+  random_drop_frame_prob: 0.0  # would break a 1-frame sample
+
+lstm:
+  hidden_size: 128             # smaller is plenty for static features
+  num_layers: 2
+  bidirectional: true
+  dropout: 0.4
+  input_dropout: 0.1
+
+transformer:
+  d_model: 128
+  nhead: 4
+  num_encoder_layers: 3
+  dim_feedforward: 256
+  dropout: 0.2
+  max_position_embeddings: 32
+
+training:
+  batch_size: 64
+  num_workers: 2
+  epochs: 25
+  learning_rate: 1.0e-3
+  weight_decay: 1.0e-4
+  grad_clip: 1.0
+  scheduler: "cosine"
+  warmup_epochs: 2
+  early_stopping_patience: 6
+  ctc_mode: false
+  label_smoothing: 0.05
+  mixed_precision: false
+  seed: 42
+
+realtime:
+  window_size: 12              # ~0.4s of webcam at 30fps
+  stride: 3
+  smoothing_alpha: 0.7         # heavier smoothing -> stable letter display
+  confidence_threshold: 0.55
+  display_top_k: 3
+  target_latency_ms: 300
+  camera_index: 0
+  display_width: 960
+  display_height: 720
