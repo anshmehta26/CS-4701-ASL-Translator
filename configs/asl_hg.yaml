@@ -1,0 +1,95 @@
+# =============================================================================
+# CS 4701 — ASL Fingerspelling on ASL-HG (multi-signer)
+# =============================================================================
+# Trained on 10 distinct signers (P1-P10) split by signer:
+#   train: P1-P6  | val: P7-P8  | test: P9-P10
+# This means train/val/test signers are disjoint -> the test number measures
+# real cross-signer generalization, not within-distribution memorization.
+# =============================================================================
+
+paths:
+  data_root: "data"
+  raw_videos: "data/raw/asl-hg"
+  wlasl_json: "data/raw/WLASL_v0.3.json"
+  processed: "data/processed"
+  landmarks: "data/processed/landmarks"
+  splits: "data/processed/splits"
+  checkpoints: "checkpoints"
+  logs: "logs"
+  figures: "figures"
+
+dataset:
+  num_classes: 26              # A-Z (digits excluded by default)
+  min_videos_per_class: 1
+  # Note: train/val/test ratios in the config are unused for ASL-HG since the
+  # split is by signer, not by ratio. Kept for compatibility with other configs.
+  train_ratio: 0.60
+  val_ratio: 0.20
+  test_ratio: 0.20
+  max_seq_len: 16
+  min_seq_len: 8
+  cross_subject: true          # this dataset enables it for real
+
+mediapipe:
+  static_image_mode: true
+  max_num_hands: 1
+  min_detection_confidence: 0.4
+  min_tracking_confidence: 0.4
+  use_holistic: false
+
+preprocessing:
+  wrist_relative: true
+  scale_normalize: true
+  smoothing_window: 1
+  interpolate_missing: false
+  max_missing_frame_ratio: 1.0
+  num_hands: 1                 # 21 * 3 = 63-dim features
+
+augmentation:
+  enable: true
+  horizontal_flip_prob: 0.5
+  gaussian_noise_std: 0.02     # slightly stronger than the alphabet config
+  time_warp_prob: 0.0
+  time_warp_factor_range: [0.85, 1.15]
+  random_drop_frame_prob: 0.0
+
+lstm:
+  hidden_size: 128
+  num_layers: 2
+  bidirectional: true
+  dropout: 0.4
+  input_dropout: 0.15
+
+transformer:
+  d_model: 128
+  nhead: 4
+  num_encoder_layers: 3
+  dim_feedforward: 256
+  dropout: 0.2
+  max_position_embeddings: 32
+
+training:
+  batch_size: 64
+  num_workers: 2
+  epochs: 40                   # more variety per class -> can train longer
+  learning_rate: 1.0e-3
+  weight_decay: 1.0e-4
+  grad_clip: 1.0
+  scheduler: "cosine"
+  warmup_epochs: 2
+  early_stopping_patience: 8
+  ctc_mode: false
+  label_smoothing: 0.05
+  mixed_precision: false
+  seed: 42
+
+realtime:
+  window_size: 12
+  stride: 3
+  smoothing_alpha: 0.7
+  confidence_threshold: 0.55
+  display_top_k: 3
+  target_latency_ms: 300
+  camera_index: 0
+  display_width: 960
+  display_height: 720
